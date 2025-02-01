@@ -10,11 +10,13 @@ import {
   Alert,
 } from '@mui/material';
 import { useAppState, useAppDispatch } from '../context/AppContext';
-import { updateUserDetails } from '../services/api';
+import { updateUserDetails, clearAuthToken } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const ProfilePage = () => {
   const { user } = useAppState();
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -30,8 +32,16 @@ const ProfilePage = () => {
   };
 
   const handleSaveChanges = async () => {
+    if (!formData.name || !formData.email || !formData.phone) {
+      setSnackbar({
+        open: true,
+        message: 'Please fill in all the fields.',
+        severity: 'error',
+      });
+      return;
+    }
+
     try {
-      // Call API to save changes
       await updateUserDetails(user.id, formData);
       dispatch({ type: 'SET_USER', payload: { ...user, ...formData } });
 
@@ -64,8 +74,14 @@ const ProfilePage = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleLogout = () => {
+    clearAuthToken();
+    dispatch({ type: 'SET_USER', payload: null });
+    navigate('/auth');
+  };
+
   return (
-    <Box sx={{ p: 4 }}>
+    <Box sx={{ p: 4, backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
       <Paper
         elevation={3}
         sx={{
@@ -74,11 +90,19 @@ const ProfilePage = () => {
           mx: 'auto',
           borderRadius: 3,
           boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+          backgroundColor: '#ffffff',
         }}
       >
-        <Typography variant="h4" gutterBottom sx={{ textAlign: 'center' }}>
-          Profile
+        <Typography variant="h4" gutterBottom sx={{ textAlign: 'center', fontWeight: 'bold' }}>
+          Welcome, {user?.name || 'User'}!
         </Typography>
+        <Typography
+          variant="subtitle1"
+          sx={{ textAlign: 'center', color: '#666', mb: 4 }}
+        >
+          Manage your profile information and settings.
+        </Typography>
+
         <Grid container spacing={2}>
           {/* Name */}
           <Grid item xs={12}>
@@ -136,23 +160,54 @@ const ProfilePage = () => {
         <Box
           sx={{
             display: 'flex',
-            justifyContent: isEditing ? 'space-between' : 'flex-end',
+            justifyContent: isEditing ? 'space-between' : 'space-between',
             mt: 3,
           }}
         >
           {isEditing ? (
             <>
-              <Button variant="contained" color="primary" onClick={handleSaveChanges}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSaveChanges}
+                sx={{
+                  backgroundColor: '#1976d2',
+                  '&:hover': { backgroundColor: '#115293' },
+                }}
+              >
                 Save Changes
               </Button>
-              <Button variant="outlined" color="error" onClick={handleCancelEdit}>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={handleCancelEdit}
+                sx={{ color: '#d32f2f', borderColor: '#d32f2f' }}
+              >
                 Cancel
               </Button>
             </>
           ) : (
-            <Button variant="contained" color="primary" onClick={() => setIsEditing(true)}>
-              Edit Profile
-            </Button>
+            <>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setIsEditing(true)}
+                sx={{
+                  backgroundColor: '#1976d2',
+                  '&:hover': { backgroundColor: '#115293' },
+                }}
+              >
+                Edit Profile
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={handleLogout}
+                sx={{ color: '#d32f2f', borderColor: '#d32f2f' }}
+              >
+                Logout
+              </Button>
+            </>
           )}
         </Box>
       </Paper>

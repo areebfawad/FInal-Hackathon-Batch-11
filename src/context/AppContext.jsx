@@ -1,4 +1,4 @@
-import React, { createContext, useReducer, useEffect } from 'react'; // Import createContext and other React hooks
+import React, { createContext, useReducer, useEffect } from 'react';
 
 // Action Type Constants
 const SET_USER = 'SET_USER';
@@ -27,10 +27,14 @@ export const AppProvider = ({ children }) => {
 
   // Persist user data to local storage
   useEffect(() => {
-    if (state.user) {
-      localStorage.setItem('user', JSON.stringify(state.user));
-    } else {
-      localStorage.removeItem('user');
+    try {
+      if (state.user) {
+        localStorage.setItem('user', JSON.stringify(state.user));
+      } else {
+        localStorage.removeItem('user');
+      }
+    } catch (err) {
+      console.error('Error persisting user data:', err);
     }
   }, [state.user]);
 
@@ -41,7 +45,7 @@ export const AppProvider = ({ children }) => {
   );
 };
 
-// Export custom hooks
+// Hook to Access State
 export const useAppState = () => {
   const context = React.useContext(AppContext);
   if (!context) {
@@ -50,6 +54,7 @@ export const useAppState = () => {
   return context.state;
 };
 
+// Hook to Dispatch Actions
 export const useAppDispatch = () => {
   const context = React.useContext(AppContext);
   if (!context) {
@@ -58,8 +63,6 @@ export const useAppDispatch = () => {
   return context.dispatch;
 };
 
-
-
-// Export context as a named export and optionally as default
+// Export Context as Named and Default
 export { AppContext };
 export default AppContext;

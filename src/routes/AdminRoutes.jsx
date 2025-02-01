@@ -5,6 +5,7 @@ import AuthPage from '../pages/AuthPage';
 import AdminDashboard from '../pages/AdminDashboard';
 import AppointmentSchedule from '../pages/AppointmentSchedule';
 import ProfilePage from '../pages/ProfilePage';
+import NotFound from '../components/NotFound';
 
 const AdminRoutes = () => {
   return (
@@ -14,6 +15,7 @@ const AdminRoutes = () => {
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/admin/appointments" element={<AppointmentSchedule />} />
       <Route path="/admin/profile" element={<ProfilePage />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };

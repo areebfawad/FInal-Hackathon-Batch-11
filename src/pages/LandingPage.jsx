@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -7,8 +7,16 @@ import {
   Paper,
   Container,
   TextField,
+  Divider,
+  Alert,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
-import Footer from '../components/Footer';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Carousel from 'react-material-ui-carousel';
+import LoanCalculator from '../components/LoanCalculator'; // Import LoanCalculator component
+import { sendContactForm } from '../services/api'; // Backend API for "Get in Touch" form
 
 const loanCategories = [
   {
@@ -37,13 +45,57 @@ const loanCategories = [
   },
 ];
 
+const testimonials = [
+  {
+    name: 'Ali Khan',
+    message:
+      'Saylani Microfinance helped me kickstart my business. Their team was supportive, and the process was seamless.',
+    image: 'https://livingwatersdownunder.com/wp-content/uploads/2018/08/profile-image-emeal-zwayne-1x1.jpg',
+  },
+  {
+    name: 'Sara Ahmed',
+    message:
+      'The education loan allowed me to complete my degree without financial stress. Highly recommended!',
+    image: 'https://via.placeholder.com/150',
+  },
+  {
+    name: 'Usman Farooq',
+    message:
+      'I was able to renovate my home with their home construction loan. The process was transparent and quick!',
+    image: 'https://via.placeholder.com/150',
+  },
+];
+
 const LandingPage = () => {
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    message: '',
+  });
+  const [submissionStatus, setSubmissionStatus] = useState({ success: null, error: '' });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setContactForm({ ...contactForm, [name]: value });
+  };
+
+  const handleFormSubmit = async () => {
+    try {
+      await sendContactForm(contactForm); // API call to send contact form data
+      setSubmissionStatus({ success: true, error: '' });
+      setContactForm({ name: '', email: '', message: '' });
+    } catch (err) {
+      setSubmissionStatus({ success: false, error: 'Failed to submit. Please try again later.' });
+    }
+  };
+
   return (
     <Box>
       {/* Hero Section */}
       <Box
         sx={{
-          backgroundImage: 'url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmFYs5C8YTQ2WJD9ZjHl4mJfJ7gjih9ydwXQ&s)',
+          backgroundImage:
+            'url(https://media.istockphoto.com/id/1017183652/photo/team-teamwork-business-join-hand-together-concept-power-of-volunteer-charity-work-stack-of.jpg?s=612x612&w=0&k=20&c=HjuuqwkDKxQ3Y1cRtra7iYTpjQVoMmG2szbse6BMA_k=)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           color: '#fff',
@@ -62,7 +114,10 @@ const LandingPage = () => {
           >
             Welcome to Saylani Microfinance
           </Typography>
-          <Typography variant="h5" sx={{ mb: 3, textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}>
+          <Typography
+            variant="h5"
+            sx={{ mb: 3, textShadow: '1px 1px 3px rgba(0,0,0,0.5)' }}
+          >
             Empowering communities through financial support.
           </Typography>
           <Button
@@ -75,6 +130,7 @@ const LandingPage = () => {
               backgroundColor: '#1976d2',
               '&:hover': { backgroundColor: '#115293' },
             }}
+            href="/loan-request"
           >
             Apply Now
           </Button>
@@ -108,24 +164,14 @@ const LandingPage = () => {
                     '&:hover': { transform: 'scale(1.05)' },
                   }}
                 >
-                  <Typography
-                    variant="h3"
-                    sx={{ mb: 2, color: '#1976d2' }}
-                  >
+                  <Typography variant="h3" sx={{ mb: 2, color: '#1976d2' }}>
                     {category.icon}
                   </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{ fontWeight: 'bold', mb: 1 }}
-                  >
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
                     {category.name}
                   </Typography>
                   <Typography sx={{ mb: 2 }}>{category.description}</Typography>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    href={category.link}
-                  >
+                  <Button variant="outlined" color="primary" href={category.link}>
                     Explore
                   </Button>
                 </Paper>
@@ -136,7 +182,7 @@ const LandingPage = () => {
       </Box>
 
       {/* Loan Calculator */}
-      <Box sx={{ py: 6 }}>
+      <Box sx={{ py: 12 }}>
         <Container>
           <Typography
             variant="h4"
@@ -144,6 +190,53 @@ const LandingPage = () => {
             sx={{ textAlign: 'center', fontWeight: 'bold', mb: 4 }}
           >
             Calculate Your Loan
+          </Typography>
+          <LoanCalculator />
+        </Container>
+      </Box>
+
+      {/* Testimonials */}
+      <Box sx={{ py: 6, backgroundColor: '#f5f5f5' }}>
+        <Container>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ textAlign: 'center', fontWeight: 'bold', mb: 4 }}
+          >
+            What Our Clients Say
+          </Typography>
+          <Carousel>
+            {testimonials.map((testimonial, index) => (
+              <Paper
+                key={index}
+                sx={{
+                  p: 4,
+                  textAlign: 'center',
+                  boxShadow: '0px 4px 10px rgba(0,0,0,0.1)',
+                  borderRadius: '10px',
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  {testimonial.name}
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 2 }}>
+                  {testimonial.message}
+                </Typography>
+              </Paper>
+            ))}
+          </Carousel>
+        </Container>
+      </Box>
+
+      {/* Contact Section */}
+      <Box sx={{ py: 6, backgroundColor: '#f9f9f9' }}>
+        <Container>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ textAlign: 'center', fontWeight: 'bold', mb: 4 }}
+          >
+            Get in Touch
           </Typography>
           <Paper
             sx={{
@@ -153,91 +246,51 @@ const LandingPage = () => {
               boxShadow: '0px 4px 10px rgba(0,0,0,0.1)',
             }}
           >
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Loan Amount (PKR)"
-                  variant="outlined"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Loan Period (Years)"
-                  variant="outlined"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  sx={{
-                    py: 1.5,
-                    backgroundColor: '#1976d2',
-                    '&:hover': { backgroundColor: '#115293' },
-                  }}
-                >
-                  Calculate
-                </Button>
-              </Grid>
-            </Grid>
+            <TextField
+              fullWidth
+              label="Your Name"
+              name="name"
+              variant="outlined"
+              value={contactForm.name}
+              onChange={handleInputChange}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Your Email"
+              name="email"
+              variant="outlined"
+              value={contactForm.email}
+              onChange={handleInputChange}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              fullWidth
+              label="Your Message"
+              name="message"
+              variant="outlined"
+              multiline
+              rows={4}
+              value={contactForm.message}
+              onChange={handleInputChange}
+              sx={{ mb: 2 }}
+            />
+            <Button variant="contained" color="primary" fullWidth onClick={handleFormSubmit}>
+              Send Message
+            </Button>
+            {submissionStatus.success && (
+              <Alert severity="success" sx={{ mt: 2 }}>
+                Message sent successfully!
+              </Alert>
+            )}
+            {submissionStatus.error && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {submissionStatus.error}
+              </Alert>
+            )}
           </Paper>
         </Container>
       </Box>
-
-      {/* About Us */}
-      <Box sx={{ py: 6, backgroundColor: '#f5f5f5' }}>
-        <Container>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ textAlign: 'center', fontWeight: 'bold', mb: 4 }}
-          >
-            About Us
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{ textAlign: 'center', maxWidth: 800, mx: 'auto' }}
-          >
-            Saylani Microfinance is committed to empowering individuals and
-            communities by providing accessible financial solutions. Our mission
-            is to enable economic growth and stability for everyone. Join us in
-            building a brighter tomorrow.
-          </Typography>
-        </Container>
-      </Box>
-
-      {/* Why Choose Us */}
-      <Box sx={{ py: 6 }}>
-        <Container>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ textAlign: 'center', fontWeight: 'bold', mb: 4 }}
-          >
-            Why Choose Saylani Microfinance?
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              textAlign: 'center',
-              maxWidth: 800,
-              mx: 'auto',
-              mb: 4,
-            }}
-          >
-            We offer customized loan options tailored to your specific needs.
-            Our team of experts is here to guide you every step of the way,
-            ensuring transparency and affordability. Join the thousands of
-            satisfied clients who have benefited from our financial services.
-          </Typography>
-        </Container>
-      </Box>
-
-      
-      {/* <Footer /> */}
     </Box>
   );
 };

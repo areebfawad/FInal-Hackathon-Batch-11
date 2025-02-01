@@ -5,6 +5,7 @@ import AuthPage from '../pages/AuthPage';
 import LoanRequestForm from '../pages/LoanRequestForm';
 import ProfilePage from '../pages/ProfilePage';
 import LoanSlips from '../pages/LoanSlips';
+import NotFound from '../components/NotFound';
 
 const UserRoutes = () => {
   return (
@@ -14,6 +15,7 @@ const UserRoutes = () => {
       <Route path="/loan-request" element={<LoanRequestForm />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/loan-slips" element={<LoanSlips />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };

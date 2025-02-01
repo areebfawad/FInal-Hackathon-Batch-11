@@ -28,19 +28,24 @@ const AuthPage = () => {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState(0); // 0 for Login, 1 for Register
-  const [formData, setFormData] = useState({ email: '', password: '', name: '' });
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    name: '',
+    cnic: '', // Added `cnic` for registration
+  });
   const [error, setError] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: '' });
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
-    setFormData({ email: '', password: '', name: '' }); // Reset form
+    setFormData({ email: '', password: '', name: '', cnic: '' }); // Reset form
     setError('');
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value || '' });
   };
 
   const handlePasswordVisibilityToggle = () => {
@@ -55,7 +60,11 @@ const AuthPage = () => {
     e.preventDefault();
 
     // Validation for missing fields
-    if (!formData.email || !formData.password || (activeTab === 1 && !formData.name)) {
+    if (
+      !formData.email ||
+      !formData.password ||
+      (activeTab === 1 && (!formData.name || !formData.cnic))
+    ) {
       setError('All fields are required.');
       setSnackbar({ open: true, message: 'Please fill in all fields.', severity: 'error' });
       return;
@@ -63,18 +72,25 @@ const AuthPage = () => {
 
     try {
       if (activeTab === 0) {
-        // Login
+        // Login API Call
         const response = await loginUser({ email: formData.email, password: formData.password });
         dispatch({ type: 'SET_USER', payload: response.data.user });
-        navigate('/dashboard');
+        setSnackbar({ open: true, message: 'Login successful!', severity: 'success' });
+        navigate('/dashboard'); // Redirect to user dashboard
       } else {
-        // Register
-        const response = await registerUser(formData);
+        // Register API Call
+        const response = await registerUser({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          cnic: formData.cnic,
+        });
         dispatch({ type: 'SET_USER', payload: response.data.user });
-        navigate('/dashboard');
+        setSnackbar({ open: true, message: 'Registration successful!', severity: 'success' });
+        navigate('/dashboard'); // Redirect to user dashboard
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Invalid credentials. Please try again.';
+      const errorMessage = err.response?.data?.message || 'An error occurred. Please try again.';
       setError(errorMessage);
       setSnackbar({ open: true, message: errorMessage, severity: 'error' });
     }
@@ -114,16 +130,28 @@ const AuthPage = () => {
         {/* Login/Register Form */}
         <form onSubmit={handleSubmit}>
           {activeTab === 1 && (
-            <TextField
-              fullWidth
-              label="Name"
-              name="name"
-              margin="normal"
-              variant="outlined"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
+            <>
+              <TextField
+                fullWidth
+                label="Name"
+                name="name"
+                margin="normal"
+                variant="outlined"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+              <TextField
+                fullWidth
+                label="CNIC"
+                name="cnic"
+                margin="normal"
+                variant="outlined"
+                value={formData.cnic}
+                onChange={handleChange}
+                required
+              />
+            </>
           )}
           <TextField
             fullWidth
