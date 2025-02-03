@@ -1,20 +1,29 @@
-// index.jsx or main.jsx
-import React from 'react';
-import ReactDOM from 'react-dom/client'; // Import createRoot from react-dom/client
-import App from './App';
-import { AppProvider } from './context/AppContext';
+// import { StrictMode } from "react";
+// import { createRoot } from "react-dom/client";
+// import "./index.css";
+// import App from "./App.jsx";
+// import { ClassProvider } from "./Teacher/context/ClassContext.jsx";
+// import { Toaster } from "react-hot-toast";
 
-// Find the root element in your HTML
-const container = document.getElementById('root');
+// createRoot(document.getElementById("root")).render(
+//   <ClassProvider>
+//     <StrictMode>
+//       <App />
+//       <Toaster position="top-center" reverseOrder={false} />
+//     </StrictMode>
+//   </ClassProvider>
+// );
 
-// Create a root instance using createRoot
-const root = ReactDOM.createRoot(container);
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App.jsx";
+import { Toaster } from "react-hot-toast";
 
-// Render the application
-root.render(
-  <React.StrictMode>
-    <AppProvider>
+createRoot(document.getElementById("root")).render(
+    <StrictMode>
       <App />
-    </AppProvider>
-  </React.StrictMode>
+      <Toaster position="top-center" reverseOrder={false} />
+    </StrictMode>
 );
+

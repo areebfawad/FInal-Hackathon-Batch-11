@@ -1,288 +1,147 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Button,
-  TextField,
-  MenuItem,
-  Grid,
-  Modal,
-  Fade,
-  Backdrop,
-  Pagination,
-  Snackbar,
-  Alert,
-} from '@mui/material';
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import AdminLayout from "../components/App Components/AdminLayout"
 
-const AdminDashboard = () => {
-  const [applications, setApplications] = useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      category: 'Business Startup Loans',
-      subcategory: 'Shop Assets',
-      purpose: 'Buy new equipment for shop',
-      amount: 500000,
-      status: 'Pending',
-      guarantors: [
-        { name: 'Jane Doe', phone: '03012345678', cnic: '12345-6789012-3' },
-        { name: 'Ali Raza', phone: '03098765432', cnic: '12345-9876543-2' },
-      ],
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      category: 'Education Loans',
-      subcategory: 'University Fees',
-      purpose: 'Pay tuition for final semester',
-      amount: 300000,
-      status: 'Approved',
-      guarantors: [
-        { name: 'Ahmed Khan', phone: '03123456789', cnic: '12345-6789012-4' },
-        { name: 'Sara Ali', phone: '03219876543', cnic: '12345-6789012-5' },
-      ],
-    },
-  ]);
+export default function AdminDashboard() {
+    const [analyticsData, setAnalyticsData] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
 
-  const [filters, setFilters] = useState({ status: '', category: '', search: '' });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [modalData, setModalData] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await fetch("https://smit-final-hackaton-backend-production-da72.up.railway.app/api/loan/getAllRequest")
+                if (!response.ok) {
+                    throw new Error("Failed to fetch data")
+                }
+                let users = await fetch("https://smit-final-hackaton-backend-production-da72.up.railway.app/api/auth/allUsers")
+                users = await users.json()
+                console.log(users, "usrs");
 
-  const categories = [
-    'Wedding Loans',
-    'Home Construction Loans',
-    'Business Startup Loans',
-    'Education Loans',
-  ];
+                const data = await response.json()
+                console.log(data);
 
-  const rowsPerPage = 5;
+                const requests = data.data
+                users = users.data
 
-  // Filter applications
-  const filteredApplications = applications
-    .filter(
-      (app) =>
-        (filters.status ? app.status === filters.status : true) &&
-        (filters.category ? app.category === filters.category : true) &&
-        (filters.search ? app.name.toLowerCase().includes(filters.search.toLowerCase()) : true)
-    )
-    .slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+                const analytics = {
+                    totalRequests: requests.length,
+                    pendingRequests: requests.filter((r) => r.status === "Pending").length,
+                    acceptedRequests: requests.filter((r) => r.status === "Approved").length,
+                    rejectedRequests: requests.filter((r) => r.status === "Rejected").length,
+                    totalUsers: users.length,
+                }
 
-  const handleFilterChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
-  };
+                setAnalyticsData(analytics)
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "An error occurred")
+                console.log(err, "error");
 
-  const handlePageChange = (event, value) => {
-    setCurrentPage(value);
-  };
+            } finally {
+                setLoading(false)
+            }
+        }
 
-  const handleAction = (id, action) => {
-    setApplications((prev) =>
-      prev.map((app) =>
-        app.id === id ? { ...app, status: action } : app
-      )
-    );
-    setSnackbar({
-      open: true,
-      message: `Application ${action === 'Approved' ? 'approved' : 'rejected'} successfully!`,
-      severity: action === 'Approved' ? 'success' : 'error',
-    });
-  };
+        fetchData()
+    }, [])
 
-  const handleModalOpen = (app) => {
-    setModalData(app);
-  };
-
-  const handleModalClose = () => {
-    setModalData(null);
-  };
-
-  const handleSnackbarClose = () => {
-    setSnackbar({ ...snackbar, open: false });
-  };
-
-  const exportDetails = () => {
-    if (modalData) {
-      const data = JSON.stringify(modalData, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `LoanDetails_${modalData.id}.json`;
-      a.click();
+    if (loading) {
+        return <LoadingSkeleton />
     }
-  };
 
-  return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Admin Dashboard
-      </Typography>
+    if (error) {
+        return <div className="text-center mt-8 text-red-500">{error}</div>
+    }
 
-      {/* Filters */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            select
-            label="Filter by Status"
-            name="status"
-            value={filters.status}
-            onChange={handleFilterChange}
-            fullWidth
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="Pending">Pending</MenuItem>
-            <MenuItem value="Approved">Approved</MenuItem>
-            <MenuItem value="Rejected">Rejected</MenuItem>
-          </TextField>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            select
-            label="Filter by Category"
-            name="category"
-            value={filters.category}
-            onChange={handleFilterChange}
-            fullWidth
-          >
-            <MenuItem value="">All Categories</MenuItem>
-            {categories.map((category, index) => (
-              <MenuItem key={index} value={category}>
-                {category}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            label="Search by Name"
-            name="search"
-            value={filters.search}
-            onChange={handleFilterChange}
-            fullWidth
-          />
-        </Grid>
-      </Grid>
+    if (!analyticsData) {
+        return <div className="text-center mt-8">No data available</div>
+    }
 
-      {/* Applications Table */}
-      <Paper sx={{ p: 2 }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell>Amount (PKR)</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredApplications.map((app) => (
-              <TableRow key={app.id} hover>
-                <TableCell>{app.name}</TableCell>
-                <TableCell>{app.category}</TableCell>
-                <TableCell>{app.amount}</TableCell>
-                <TableCell>{app.status}</TableCell>
-                <TableCell>
-                  {app.status === 'Pending' && (
-                    <>
-                      <Button
-                        variant="contained"
-                        color="success"
-                        onClick={() => handleAction(app.id, 'Approved')}
-                        sx={{ mr: 1 }}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        onClick={() => handleAction(app.id, 'Rejected')}
-                      >
-                        Reject
-                      </Button>
-                    </>
-                  )}
-                  <Button
-                    variant="outlined"
-                    sx={{ ml: 1 }}
-                    onClick={() => handleModalOpen(app)}
-                  >
-                    View Details
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-          <Pagination
-            count={Math.ceil(applications.length / rowsPerPage)}
-            page={currentPage}
-            onChange={handlePageChange}
-            color="primary"
-          />
-        </Box>
-      </Paper>
+    const chartData = [
+        { name: "Pending", value: analyticsData.pendingRequests },
+        { name: "Accepted", value: analyticsData.acceptedRequests },
+        { name: "Rejected", value: analyticsData.rejectedRequests },
+    ]
 
-      {/* Details Modal */}
-      <Modal
-        open={!!modalData}
-        onClose={handleModalClose}
-        closeAfterTransition
-        BackdropComponent={Backdrop}
-        BackdropProps={{
-          timeout: 500,
-        }}
-      >
-        <Fade in={!!modalData}>
-          <Paper sx={{ p: 4, mx: 'auto', maxWidth: 600, mt: '10%' }}>
-            <Typography variant="h6" gutterBottom>
-              Application Details
-            </Typography>
-            {modalData && (
-              <>
-                <Typography><strong>Name:</strong> {modalData.name}</Typography>
-                <Typography><strong>Category:</strong> {modalData.category}</Typography>
-                <Typography><strong>Subcategory:</strong> {modalData.subcategory}</Typography>
-                <Typography><strong>Purpose:</strong> {modalData.purpose}</Typography>
-                <Typography><strong>Amount:</strong> PKR {modalData.amount}</Typography>
-                <Typography variant="h6" sx={{ mt: 2 }}>Guarantors:</Typography>
-                {modalData.guarantors.map((g, i) => (
-                  <Typography key={i}>
-                    {g.name} - {g.phone} - {g.cnic}
-                  </Typography>
-                ))}
-              </>
-            )}
-            <Box sx={{ mt: 3 }}>
-              <Button variant="contained" color="primary" onClick={exportDetails} sx={{ mr: 2 }}>
-                Export Details
-              </Button>
-              <Button variant="contained" onClick={handleModalClose}>
-                Close
-              </Button>
-            </Box>
-          </Paper>
-        </Fade>
-      </Modal>
+    return (
+        <AdminLayout>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={handleSnackbarClose}
-      >
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
-      </Snackbar>
-    </Box>
-  );
-};
+            <div className="space-y-8">
+                <h1 className="text-3xl font-bold">Dashboard</h1>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <AnalyticsCard title="Total Requests" value={analyticsData.totalRequests} />
+                    <AnalyticsCard title="Pending Requests" value={analyticsData.pendingRequests} />
+                    <AnalyticsCard title="Accepted Requests" value={analyticsData.acceptedRequests} />
+                    <AnalyticsCard title="Rejected Requests" value={analyticsData.rejectedRequests} />
+                    <AnalyticsCard title="Total Users" value={analyticsData.totalUsers} />
+                </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Loan Requests Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="name" />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Bar dataKey="value" fill="#2563EB" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </AdminLayout>
+    )
+}
 
-export default AdminDashboard;
+function AnalyticsCard({ title, value }) {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+            </CardContent>
+        </Card>
+    )
+}
+
+function LoadingSkeleton() {
+
+    return (
+        <AdminLayout>
+
+            <div className="space-y-8">
+                <Skeleton className="h-8 w-48" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[...Array(5)].map((_, i) => (
+                        <Card key={i}>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <Skeleton className="h-4 w-[100px]" />
+                            </CardHeader>
+                            <CardContent>
+                                <Skeleton className="h-8 w-[60px]" />
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-[200px]" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-[300px] w-full" />
+                    </CardContent>
+                </Card>
+            </div>
+        </AdminLayout>
+    )
+}
+
